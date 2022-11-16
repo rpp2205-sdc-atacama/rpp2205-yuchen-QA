@@ -23,24 +23,25 @@ fs.createReadStream("./../dataFiles/questions.csv")
     row[6] = parseInt(row[7])
     row[7] = temp;
     let question = row.slice(0, 4).concat(row.slice(6));
-    promises.push(addNew(row));
+    //promises.push(addNew(row));
     //add user to our user table;
     // addUser(row.slice(4,6))
     //  .then((id) => {
     //   question.splice(2, 0, id)
     //   addQuestion(question)
     //  })
+    console.log(row);
 
   })
   .on("end", () => {
-    Promise.all(promises)
-     .then(() => {
-      return findCount('questions');
-     })
-     .then(() => {
-      console.log('finished');
-     })
-
+    // Promise.all(promises)
+    //  .then(() => {
+    //   return findCount('questions');
+    //  })
+    //  .then(() => {
+    //   console.log('finished');
+    //  })
+    console.log('finished');
 
   })
   .on("error", (err) => {
