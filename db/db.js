@@ -11,7 +11,7 @@ const pool = new Pool({
 
 pool
   .query(`CREATE TABLE IF NOT EXISTS questions (
-    question_id INT NOT NULL,
+    question_id SERIAL NOT NULL PRIMARY KEY,
     product_id INT NOT NULL,
     asker_id INT NOT NULL,
     question_body TEXT,
@@ -45,8 +45,31 @@ pool
   .catch(err => console.error(err.stack));
 
 
-  // module.exports = {
-  //   addQues: (dataArr) => {
-  //     pool.query(`INSERT INTO VALUES($1, $2,$3,$4.$5,$6,$7)`, dataArr)
-  //   }
-  // }
+  module.exports = {
+    addUser: (userArr) => {
+      const [name, email] = userArr;
+      return pool.query(`
+      with id as( SELECT user_id FROM users WHERE user_name='${name}' AND email='${email}'),
+      i as (INSERT INTO users(user_name, email) SELECT '${name}','${email}' WHERE NOT EXISTS (SELECT 1 FROM id) returning user_Id)
+      SELECT user_id FROM id UNION ALL SELECT user_id FROM i`)
+        .then((result) => {
+          return result.rows[0].user_id;
+        })
+        .catch(err => console.error('insert new user err: ', err.stack));
+    },
+
+    addQuestion: (question) => {
+      //console.log('questions', question);
+      return pool.query('INSERT INTO questions VALUES($1, $2, $3, $4, $5, $6, $7)', question)
+        .catch(err => console.error('insert new question err: ', err.stack));
+    },
+
+    findCount: (table) => {
+      return pool.query(`SELECT count(*) FROM ${table}`)
+        .then((result) => {
+          console.log('count: ', result.rows[0].count);
+          pool.query(`SELECT setval('questions_seq', '${result.rows[0].count}')`)
+        })
+        .catch(err => console.error('findcount err: ', err.stack));
+    }
+  }
