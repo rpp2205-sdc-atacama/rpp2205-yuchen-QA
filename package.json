@@ -1,0 +1,31 @@
+{
+  "name": "rpp2205-yuchen-qa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rpp2205-sdc-atacama/rpp2205-yuchen-QA.git"
+  },
+  "author": "Yuchen Pan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rpp2205-sdc-atacama/rpp2205-yuchen-QA/issues"
+  },
+  "homepage": "https://github.com/rpp2205-sdc-atacama/rpp2205-yuchen-QA#readme",
+  "dependencies": {
+    "bluebird": "^3.7.2",
+    "csv": "^6.2.2",
+    "express": "^4.18.2",
+    "jest": "^29.3.0",
+    "node": "^19.0.1",
+    "path": "^0.12.7",
+    "pg": "^8.8.0"
+  }
+}
