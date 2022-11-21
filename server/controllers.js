@@ -12,34 +12,74 @@ module.exports = {
   //     })
   //     .catch(err => console.error('insert new user err: ', err.stack));
   // },
+
+//   SELECT row_to_json(j) FROM (
+//     SELECT a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness, ALL(json_agg(json_build_object('id',p.photo_id,'url',p.url))) AS obj
+//     FROM answers a
+//     JOIN photos p ON p.answer_id=a.answer_id WHERE a.question_id=1
+//     GROUP BY a.answer_id, a.body, a.date, a.answerer_name,a.helpfulness, p.photo_id LIMIT 5) j;
+
+//   SELECT json_build_object(
+//       'answer_id', answers.answer_id,
+//       'body', answers.body,
+//       'date', answers.date,
+//       'answerer_name', answers.answerer_name,
+//       'helpfulness', answers.helpfulness,
+//       'photo', photos
+//   ) results FROM answers
+//   LEFT JOIN(
+//     SELECT answer_id, json_agg(
+//       json_build_object(
+//         'id', photos.photo_id,
+//         'url', photos.url
+//       )
+//     ) photos FROM photos GROUP BY 1
+//   ) photos ON answers.answer_id=photos.answer_id;
+
+//   WITH photos AS (
+//     SELECT answer_id, json_agg(
+//       json_build_object(
+//         'id', p.photo_id,
+//         'url', p.url
+//       )
+//     ) photos
+//     FROM photos p
+//     GROUP BY 1
+//   )
+//   SELECT json_build_object(
+//     'answer_id', answers.answer_id,
+//     'body', answers.body,
+//     'date', answers.date,
+//     'answerer_name', answers.answerer_name,
+//     'helpfulness', answers.helpfulness,
+//     'photos', photos
+// ) results FROM answers
+
   getAnswers: (req, res) => {
     const question_id = req.params.question_id;
     const count = !req.params.count ? 5 : req.params.count;
     const page = !req.params.page ? 1 : req.params.page;
     let answers = {question: question_id, page: page, count: count};
     return pool.query(`SELECT json_build_object(
-      'answer_id', json_agg(answers.answer_id),
-      'body', json_agg(answers.body),
-      'date', json_agg(answers.date),
-      'answerer_name', json_agg(answers.answerer_name),
-      'helpfulness', json_agg(answers.helpfulness)
-      ) FROM answers WHERE answers.question_id=${question_id} LIMIT ${count}`)
+          'answer_id', answers.answer_id,
+          'body', answers.body,
+          'date', answers.date,
+          'answerer_name', answers.answerer_name,
+          'helpfulness', answers.helpfulness,
+          'photos', photos
+  ) FROM answers
+  LEFT JOIN(
+    SELECT answer_id, json_agg(
+      json_build_object(
+        'id', photos.photo_id,
+        'url', photos.url
+      )
+    ) photos FROM photos GROUP BY 1
+  ) photos ON answers.answer_id=photos.answer_id WHERE answers.question_id=${question_id} LIMIT ${count}`)
       .then((result) => {
-        console.log(result.rows[0].json_build_object);
-        let resultObj = result.rows[0].json_build_object;
-        let rowObj = [];
-        for(let i = 0; i < count; i++) {
-          let obj = {
-            'answer_id':resultObj.answer_id[i],
-            'body': resultObj.body[i],
-            'date': new Date(parseInt(resultObj.date[i])).toISOString(),
-            'answerer_name': resultObj.answerer_name[i],
-            'helpfulness': resultObj.helpfulness[i]
-          }
-          rowObj.push(obj);
-        }
-        answers.results = rowObj;
-        console.log(answers);
+        //console.log(result.rows[0].json_build_object);
+        answers.results = result.rows[0].json_build_object;
+        console.log('return answers: ', answers);
         res.status(200).json(answers);
       })
       .catch(err => console.error('getAnswer erL:', err));
