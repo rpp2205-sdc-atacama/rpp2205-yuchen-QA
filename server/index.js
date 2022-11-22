@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 
 app.get('/qa/questions/:product_id/:count', getQuestions)
 
-// app.get('/qa/questions/:product_id', (req, res) => {
+//app.get('/qa/questions/:product_id/:count', (req, res) => {
 //   console.log('product_id', req.params)
 //   res.json(req.params);
 // })

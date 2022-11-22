@@ -1,60 +1,6 @@
 const pool = require('../db/schema.js');
 const Promise = require('bluebird');
 module.exports = {
-  // addUser: (userArr) => {
-  //   const [name, email] = userArr;
-  //   return pool.query(`
-  //   with id as( SELECT user_id FROM users WHERE user_name='${name}' AND email='${email}'),
-  //   i as (INSERT INTO users(user_name, email) SELECT '${name}','${email}' WHERE NOT EXISTS (SELECT 1 FROM id) returning user_Id)
-  //   SELECT user_id FROM id UNION ALL SELECT user_id FROM i`)
-  //     .then((result) => {
-  //       return result.rows[0].user_id;
-  //     })
-  //     .catch(err => console.error('insert new user err: ', err.stack));
-  // },
-
-//   SELECT row_to_json(j) FROM (
-//     SELECT a.answer_id, a.body, a.date, a.answerer_name, a.helpfulness, ALL(json_agg(json_build_object('id',p.photo_id,'url',p.url))) AS obj
-//     FROM answers a
-//     JOIN photos p ON p.answer_id=a.answer_id WHERE a.question_id=1
-//     GROUP BY a.answer_id, a.body, a.date, a.answerer_name,a.helpfulness, p.photo_id LIMIT 5) j;
-
-//   SELECT json_build_object(
-//       'answer_id', answers.answer_id,
-//       'body', answers.body,
-//       'date', answers.date,
-//       'answerer_name', answers.answerer_name,
-//       'helpfulness', answers.helpfulness,
-//       'photo', photos
-//   ) results FROM answers
-//   LEFT JOIN(
-//     SELECT answer_id, json_agg(
-//       json_build_object(
-//         'id', photos.photo_id,
-//         'url', photos.url
-//       )
-//     ) photos FROM photos GROUP BY 1
-//   ) photos ON answers.answer_id=photos.answer_id;
-
-//   WITH photos AS (
-//     SELECT answer_id, json_agg(
-//       json_build_object(
-//         'id', p.photo_id,
-//         'url', p.url
-//       )
-//     ) photos
-//     FROM photos p
-//     GROUP BY 1
-//   )
-//   SELECT json_build_object(
-//     'answer_id', answers.answer_id,
-//     'body', answers.body,
-//     'date', answers.date,
-//     'answerer_name', answers.answerer_name,
-//     'helpfulness', answers.helpfulness,
-//     'photos', photos
-// ) results FROM answers
-
   getAnswers: (req, res) => {
     const question_id = req.params.question_id;
     const count = !req.params.count ? 5 : req.params.count;
@@ -67,15 +13,16 @@ module.exports = {
           'answerer_name', answers.answerer_name,
           'helpfulness', answers.helpfulness,
           'photos', photos
-  ) FROM answers
-  LEFT JOIN(
-    SELECT answer_id, json_agg(
-      json_build_object(
-        'id', photos.photo_id,
-        'url', photos.url
-      )
-    ) photos FROM photos GROUP BY 1
-  ) photos ON answers.answer_id=photos.answer_id WHERE answers.question_id=${question_id} LIMIT ${count}`)
+        ) FROM answers
+        LEFT JOIN(
+          SELECT answer_id, json_agg(
+            json_build_object(
+              'id', photos.photo_id,
+              'url', photos.url
+            )
+          ) photos FROM photos GROUP BY 1
+        ) photos ON answers.answer_id=photos.answer_id
+        WHERE answers.question_id=${question_id} LIMIT ${count}`)
       .then((result) => {
         //console.log(result.rows[0].json_build_object);
         answers.results = result.rows[0].json_build_object;
@@ -83,36 +30,61 @@ module.exports = {
         res.status(200).json(answers);
       })
       .catch(err => console.error('getAnswer erL:', err));
-
   },
 
   getQuestions: (req, res) => {
     const product_id = req.params.product_id;
-    const count = req.params.count;
-    if (!count) {
-      count = 1;
-    }
+
+    const count = !req.params.count ? 5 : req.params.count;
+
+    const page = !req.params.page ? 1 : req.params.page;
     let results = {product_id: product_id};
-    let promises = [];
-    return pool.query(`SELECT * FROM questions WHERE product_id=${product_id} LIMIT ${count}`)
+    let queryStr = `SELECT json_build_object(
+      'results', json_agg(
+        json_build_object(
+          'question_id', q.question_id,
+          'question_body', q.question_body,
+          'question_date', q.question_date,
+          'asker_name', q.asker_name,
+          'question_helpfulness', q.question_helpfulness,
+          'reported', q.reported,
+          'answers', answers
+        )
+      )
+    ) FROM questions q
+    LEFT JOIN(
+      SELECT question_id, json_agg(
+        json_build_object(
+          'id', a.answer_id,
+          'body', a.body,
+          'answerer_name', a.answerer_name,
+          'helpfulness', a.helpfulness,
+          'photos', photos
+        )
+      )answers FROM answers a
+        LEFT JOIN(
+          SELECT answer_id, json_agg(
+            json_build_object(
+              'id', p.photo_id,
+              'url', p.url
+            )
+          ) photos FROM photos p GROUP BY 1
+      ) p ON a.answer_id=p.answer_id
+      GROUP BY 1
+    )a ON q.question_id=a.question_id
+    WHERE q.product_id=${product_id} LIMIT ${count}`;
+    //console.log(queryStr);
+    return pool.query(queryStr)
       .then((result) => {
-        console.log('get result from quesionts')
-        results.results = result.rows;
-        return result.rows.forEach(row => {
-          getAnswers(row);
-        })
+        console.log('get result from quesionts');
+        console.log('results: ', result.rows[0].json_build_object.results);
+        results.result = result.rows[0].json_build_object.results;
+        res.status(200).json(results);
       })
-      .then((data) => console.log(data))
-      .catch(err => res.status(404).json(err));
-    // if (promises.length === count) {
-    //   cosnole.log('length enough!');
-    //   Promise.all(promises)
-    //     .then((result) => {
-    //       console.log('promise all: ', result)
-    //       res.status(200).json(result);
-    //     })
-    //     .catch(err => console.log('err in promise all', err));
-    // }
+      .catch(err => {
+        console.log('err, ',err);
+        res.status(404).json(err)});
+
   },
 
 
