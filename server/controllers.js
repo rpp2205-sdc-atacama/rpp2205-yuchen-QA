@@ -34,9 +34,7 @@ module.exports = {
 
   getQuestions: (req, res) => {
     const product_id = req.params.product_id;
-
     const count = !req.params.count ? 5 : req.params.count;
-
     const page = !req.params.page ? 1 : req.params.page;
     let results = {product_id: product_id};
     let queryStr = `SELECT json_build_object(
@@ -53,7 +51,8 @@ module.exports = {
       )
     ) FROM questions q
     LEFT JOIN(
-      SELECT question_id, json_agg(
+      SELECT question_id, json_object_agg(
+        a.answer_id,
         json_build_object(
           'id', a.answer_id,
           'body', a.body,
@@ -64,10 +63,7 @@ module.exports = {
       )answers FROM answers a
         LEFT JOIN(
           SELECT answer_id, json_agg(
-            json_build_object(
-              'id', p.photo_id,
-              'url', p.url
-            )
+            p.url
           ) photos FROM photos p GROUP BY 1
       ) p ON a.answer_id=p.answer_id
       GROUP BY 1
