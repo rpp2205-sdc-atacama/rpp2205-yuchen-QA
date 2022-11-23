@@ -1,10 +1,11 @@
 const pool = require('../db/schema.js');
-const Promise = require('bluebird');
+//const Promise = require('bluebird');
 module.exports = {
   getAnswers: (req, res) => {
     const question_id = req.params.question_id;
-    const count = !req.params.count ? 5 : req.params.count;
-    const page = !req.params.page ? 1 : req.params.page;
+    const count = !req.query.count ? 5 : req.query.count;
+    const page = !req.query.page ? 1 : req.query.page;
+    let offset = (page-1) * count;
     let answers = {question: question_id, page: page, count: count};
     return pool.query(`SELECT json_build_object(
           'answer_id', answers.answer_id,
@@ -22,9 +23,14 @@ module.exports = {
             )
           ) photos FROM photos GROUP BY 1
         ) photos ON answers.answer_id=photos.answer_id
-        WHERE answers.question_id=${question_id} LIMIT ${count}`)
+        WHERE answers.question_id=${question_id}
+        LIMIT ${count} OFFSET ${offset}`)
       .then((result) => {
         //console.log(result.rows[0].json_build_object);
+        if (!result.rows.length) {
+          answers.results = result.rows;
+          return res.status(200).json(answers);
+        }
         answers.results = result.rows[0].json_build_object;
         console.log('return answers: ', answers);
         res.status(200).json(answers);
@@ -33,9 +39,10 @@ module.exports = {
   },
 
   getQuestions: (req, res) => {
-    const product_id = req.params.product_id;
-    const count = !req.params.count ? 5 : req.params.count;
-    const page = !req.params.page ? 1 : req.params.page;
+    const product_id = Number(req.query.product_id);
+    const count = !req.query.count ? 5 : Number(req.query.count);
+    const page = !req.query.page ? 1 : Number(req.query.page);
+    let offset = (page - 1) * count;
     let results = {product_id: product_id};
     let queryStr = `SELECT json_build_object(
       'results', json_agg(
@@ -68,30 +75,46 @@ module.exports = {
       ) p ON a.answer_id=p.answer_id
       GROUP BY 1
     )a ON q.question_id=a.question_id
-    WHERE q.product_id=${product_id} LIMIT ${count}`;
+    WHERE q.product_id=${product_id}
+    LIMIT ${count} OFFSET ${offset}`;
     //console.log(queryStr);
     return pool.query(queryStr)
       .then((result) => {
-        console.log('get result from quesionts');
-        console.log('results: ', result.rows[0].json_build_object.results);
-        results.result = result.rows[0].json_build_object.results;
+        if (!result.rows[0]) {
+          results.results = result.rows;
+          return res.status(200).json(results);
+        }
+        console.log('results:  ', result.rows[0]);
+        results.results = result.rows[0].json_build_object.results;
         res.status(200).json(results);
       })
       .catch(err => {
         console.log('err, ',err);
-        res.status(404).json(err)});
-
+        res.status(400).json(err)});
+  },
+  addQuestion: (req, res) => {
+    console.log('question', req.body);
+  //  return pool.query(`INSERT INTO questions VALUES(nextval('questions_seq'), $1, $2, $3, $4, $5, $6)`, question)
+  //    .then(() => {
+  //      res.status(201).send('new question added!');
+  //    })
+  //    .catch(err => console.error('insert new question err: ', err.stack));
   },
 
-
-
-  // addQuestion: (question) => {
-  //   //console.log('questions', question);
-  //   return pool.query(`INSERT INTO questions VALUES(nextval('questions_seq'), $1, $2, $3, $4, $5, $6)`, question)
-  //     .catch(err => console.error('insert new question err: ', err.stack));
-  // },
-
-  // addAnswer: (answer) => {
-  //   return pool.query(`INSERT INTO answers VALUEWS(nextval('answers_seq))`)
-  // }
+  addAnswer: (req, res) => {
+    console.log('new answer: ', req.body);
+  //  return pool.query(`INSERT INTO answers VALUEWS(nextval('answers_seq), $1, $2, $3, $4, $5, $6)`, answer)
+  },
+  updateHelpQuestion: (req, res) => {
+    console.log('help question: ', req.body)
+  },
+  updateHelpAnswer:(req, res) => {
+    console.log('help answer')
+  },
+  updateReportQuestion: (req, res) => {
+    console.log('Reported Question');
+  },
+  updateReportAnswer: (req, res) => {
+    console.log(' Report Answer')
+  }
 }
