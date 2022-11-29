@@ -18,7 +18,7 @@ pool
     asker_name VARCHAR(50) NOT NULL,
     asker_email VARCHAR(100) NOT NULL,
     question_body TEXT NOT NULL,
-    question_date VARCHAR(100) NOT NULL,
+    question_date bigint not null,
     question_helpfulness INT,
     reported boolean
   )`)
@@ -29,7 +29,7 @@ pool
       answerer_name VARCHAR(50) NOT NULL,
       answerer_email VARCHAR(100) NOT NULL,
       body TEXT NOT NULL,
-      date VARCHAR(100) NOT NULL,
+      date bigint NOT NULL,
       helpfulness INT,
       reported boolean
     )`)

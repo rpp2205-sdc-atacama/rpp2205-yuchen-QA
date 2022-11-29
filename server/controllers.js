@@ -1,5 +1,19 @@
-const pool = require('../db/schema.js');
-//const Promise = require('bluebird');
+const {Client} = require('pg');
+const client = new Client({
+  host: 'localhost',
+  port: 5432,
+  user: 'yuchen',
+  database: 'sdcqa',
+  password: '123'
+});
+client.connect((err) => {
+  if (err) {
+    console.error('connect error: ', err.stack)
+  }
+  else {
+    console.log('connected!')
+  }
+})
 module.exports = {
   getAnswers: (req, res) => {
     const question_id = req.params.question_id;
@@ -7,7 +21,7 @@ module.exports = {
     const page = !req.query.page ? 1 : req.query.page;
     let offset = (page-1) * count;
     let answers = {question: question_id, page: page, count: count};
-    return pool.query(`SELECT json_build_object(
+    return client.query(`SELECT json_build_object(
           'answer_id', answers.answer_id,
           'body', answers.body,
           'date', answers.date,
@@ -78,7 +92,7 @@ module.exports = {
     WHERE q.product_id=${product_id}
     LIMIT ${count} OFFSET ${offset}`;
     //console.log(queryStr);
-    return pool.query(queryStr)
+    return client.query(queryStr)
       .then((result) => {
         if (!result.rows[0]) {
           results.results = result.rows;
@@ -93,12 +107,13 @@ module.exports = {
         res.status(400).json(err)});
   },
   addQuestion: (req, res) => {
-    console.log('question', req.body);
-  //  return pool.query(`INSERT INTO questions VALUES(nextval('questions_seq'), $1, $2, $3, $4, $5, $6)`, question)
-  //    .then(() => {
-  //      res.status(201).send('new question added!');
-  //    })
-  //    .catch(err => console.error('insert new question err: ', err.stack));
+    const question = [req.body.product_id, req.body.name, req.body.email, req.body.body, Date.now(), 0 , false]
+    console.log('new q: ', question);
+   return client.query(`INSERT INTO questions VALUES(nextval('questions_seq'), $1, $2, $3, $4, $5, $6, $7)`, question)
+     .then(() => {
+       res.status(201).send('new question added!');
+     })
+     .catch(err => console.error('insert new question err: ', err.stack));
   },
 
   addAnswer: (req, res) => {

@@ -33,5 +33,9 @@ pool
     console.log('photos ', res.command, res.rowCount)
     setSeqVal('photos');
   })
-  .then(() => console.log('photos table setuped!'))
+  .then(() => {
+    console.log('photos table setuped!');
+    return pool.end();
+  })
+  .then(() => {console.log('pool has ended!')})
   .catch(err => console.error('Import Data Err:', err.stack))

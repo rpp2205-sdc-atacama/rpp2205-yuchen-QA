@@ -1,5 +1,4 @@
 const { Pool } = require('pg');
-//const { findCount } = require('./controllers.js');
 
 const pool = new Pool({
   host: 'localhost',
