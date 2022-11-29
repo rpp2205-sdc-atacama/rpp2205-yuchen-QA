@@ -1,4 +1,5 @@
 const {Client} = require('pg');
+const { expand } = require('./helper.js');
 const client = new Client({
   host: 'localhost',
   port: 5432,
@@ -107,19 +108,44 @@ module.exports = {
         res.status(400).json(err)});
   },
   addQuestion: (req, res) => {
-    const question = [req.body.product_id, req.body.name, req.body.email, req.body.body, Date.now(), 0 , false]
+    const question = [req.body.product_id, req.body.name, req.body.email, req.body.body, new Date(Date.now()).toISOString()]
     console.log('new q: ', question);
-   return client.query(`INSERT INTO questions VALUES(nextval('questions_seq'), $1, $2, $3, $4, $5, $6, $7)`, question)
-     .then(() => {
-       res.status(201).send('new question added!');
-     })
-     .catch(err => console.error('insert new question err: ', err.stack));
+    return client.query(`INSERT INTO questions VALUES(nextval('questions_seq'), $1, $2, $3, $4, $5)`, question)
+      .then(() => {
+        res.status(201).send('new question added!');
+      })
+      .catch(err => console.error('insert new question err: ', err.stack));
   },
 
   addAnswer: (req, res) => {
-    console.log('new answer: ', req.body);
-  //  return pool.query(`INSERT INTO answers VALUEWS(nextval('answers_seq), $1, $2, $3, $4, $5, $6)`, answer)
+    const answer = [parseInt(req.params.question_id), req.body.name, req.body.email, req.body.body, new Date(Date.now()).toISOString()]
+    if (!req.body.photos.length) {
+      return client.query(`INSERT INTO answers VALUEWS(nextval('answers_seq'), $1, $2, $3, $4, $5)`, answer)
+      .then(() => {
+        res.status(201).send('added new answers without photos');
+      })
+      .catch(err => {
+        console.log('no photo: ', err);
+        res.status(400).json(err);
+      });
+    };
+    return client.query(`INSERT INTO answers VALUES(nextval('answers_seq'), $1, $2, $3, $4, $5) returning answer_id`, answer)
+    .then((result) => {
+      let id = result.rows[0].answer_id;
+      return Promise.all(req.body.photos.map(photo => {
+        return client.query(`INSERT INTO photos VALUES(nextval('photos_seq'), '${photo}', ${id})`)
+      }))
+      .catch(err => {
+        console.log('promise: ', err)
+        res.status(400).send(err)
+      })
+    })
+    .then(() => res.status(201).send('added new answers with photos'))
+    .catch(err => { console.log("has photo", err);
+    res.status(400).send(err)
+    });
   },
+
   updateHelpQuestion: (req, res) => {
     console.log('help question: ', req.body)
   },
