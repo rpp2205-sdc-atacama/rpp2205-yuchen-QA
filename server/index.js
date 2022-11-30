@@ -26,7 +26,7 @@ app.put('qa/questions/:question_id/report', updateReportQuestion);
 
 app.put('/qa/answers/:answer_id/report', updateReportAnswer);
 
-const port = 3000;
+const port = 8000;
 app.listen(port,() => {
   console.log(`App running on port ${port}`)
 })

@@ -26,12 +26,12 @@ module.exports = {
         'date', answers.date,
         'answerer_name', answers.answerer_name,
         'helpfulness', answers.helpfulness,
-        'photos', photos
+        'photos', coalesce(photos, '[]')
       )
     )FROM (
       SELECT * FROM answers
-        WHERE answers.question_id=${answers.question}
-        LIMIT ${answers.count} OFFSET ${offset}) AS answers
+      WHERE answers.question_id=${answers.question}
+      LIMIT ${answers.count} OFFSET ${offset}) AS answers
     LEFT JOIN(
       SELECT answer_id, json_agg(
         json_build_object(
@@ -40,10 +40,10 @@ module.exports = {
         )
       ) photos FROM photos GROUP BY 1
     ) photos ON answers.answer_id=photos.answer_id
-  `)
+    `)
       .then((result) => {
-        console.log(result.rows[0]);
-        answers.results = !result.rows.length ? result.rows : results.rows[0].json_agg;
+        //console.log(result.rows[0]);
+        answers.results = !result.rows.length ? result.rows : result.rows[0].json_agg;
         console.log('return answers', answers);
         return answers;
       })
@@ -63,7 +63,7 @@ module.exports = {
           'asker_name', q.asker_name,
           'question_helpfulness', q.question_helpfulness,
           'reported', q.reported,
-          'answers', answers
+          'answers', coalesce(answers, '[]')
         )
       ) FROM (
         SELECT * FROM questions
@@ -77,7 +77,7 @@ module.exports = {
           'body', a.body,
           'answerer_name', a.answerer_name,
           'helpfulness', a.helpfulness,
-          'photos', photos
+          'photos', coalesce(photos, '[]')
         )
       )answers FROM answers a
         LEFT JOIN(
@@ -92,7 +92,7 @@ module.exports = {
       .then((result) => {
         //console.log(result.rows[0].json_agg);
         results.results = !result.rows[0] ? result.rows : result.rows[0].json_agg
-        console.lot(results);
+        console.log(results);
         return results;
       })
       .catch(err => {
@@ -158,6 +158,7 @@ module.exports = {
         throw err;
       })
   },
+
   updateReportAnswer: (answer_id) => {
     return client.query(`UPDATE answers SET reported = '1' WHERE answer_id=${answer_id}`)
     .catch(err => {
