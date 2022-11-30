@@ -28,7 +28,10 @@ module.exports = {
         'helpfulness', answers.helpfulness,
         'photos', photos
       )
-    )FROM answers
+    )FROM (
+      SELECT * FROM answers
+        WHERE answers.question_id=${answers.question}
+        LIMIT ${answers.count} OFFSET ${offset}) AS answers
     LEFT JOIN(
       SELECT answer_id, json_agg(
         json_build_object(
@@ -37,15 +40,10 @@ module.exports = {
         )
       ) photos FROM photos GROUP BY 1
     ) photos ON answers.answer_id=photos.answer_id
-    WHERE answers.question_id=${answers.question}
-    LIMIT ${answers.count} OFFSET ${offset}`)
+  `)
       .then((result) => {
         console.log(result.rows[0]);
-        if (!result.rows.length) {
-          answers.results = result.rows;
-        } else {
-          answers.results = result.rows[0].json_agg;
-        }
+        answers.results = !result.rows.length ? result.rows : results.rows[0].json_agg;
         console.log('return answers', answers);
         return answers;
       })
@@ -57,8 +55,7 @@ module.exports = {
 
   getQuestions: (product_id,count,page,results) => {
     let offset = (page - 1) * count;
-    let queryStr = `SELECT json_build_object(
-      'results', json_agg(
+    let queryStr = `SELECT json_agg(
         json_build_object(
           'question_id', q.question_id,
           'question_body', q.question_body,
@@ -68,9 +65,11 @@ module.exports = {
           'reported', q.reported,
           'answers', answers
         )
-      )
-    ) FROM questions q
-    LEFT JOIN(
+      ) FROM (
+        SELECT * FROM questions
+        WHERE product_id=${product_id}
+        LIMIT ${count} OFFSET ${offset}
+      ) AS q LEFT JOIN(
       SELECT question_id, json_object_agg(
         a.answer_id,
         json_build_object(
@@ -88,11 +87,12 @@ module.exports = {
       ) p ON a.answer_id=p.answer_id
       GROUP BY 1
     )a ON q.question_id=a.question_id
-    WHERE q.product_id=${product_id}
-    LIMIT ${count} OFFSET ${offset}`;
+   `;
     return client.query(queryStr)
       .then((result) => {
-        results.results = !result.rows[0] ? result.rows : result.rows[0].json_build_object.results
+        //console.log(result.rows[0].json_agg);
+        results.results = !result.rows[0] ? result.rows : result.rows[0].json_agg
+        console.lot(results);
         return results;
       })
       .catch(err => {
@@ -135,16 +135,34 @@ module.exports = {
       });
   },
 
-  updateHelpQuestion: (req, res) => {
-    console.log('help question: ', req.body)
+  updateHelpQuestion: (question_id) => {
+
+    return client.query(`UPDATE questions SET question_helpfulness = question_helpfulness + 1 WHERE question_id=${question_id}`)
+      .catch(err => {
+        console.error('update question help', err);
+        throw err;
+      })
   },
-  updateHelpAnswer:(req, res) => {
-    console.log('help answer')
+  updateHelpAnswer:(answer_id) => {
+    return client.query(`UPDATE answers SET helpfulness = helpfulness + 1 WHERE answer_id=${answer_id}`)
+    .catch(err => {
+      console.error('update answer help', err);
+      throw err;
+    })
   },
-  updateReportQuestion: (req, res) => {
+  updateReportQuestion: (question_id) => {
     console.log('Reported Question');
+    return client.query(`UPDATE questions SET reported = '1' WHERE question_id=${question_id}`)
+      .catch(err => {
+        console.error('report question', err);
+        throw err;
+      })
   },
-  updateReportAnswer: (req, res) => {
-    console.log(' Report Answer')
+  updateReportAnswer: (answer_id) => {
+    return client.query(`UPDATE answers SET reported = '1' WHERE answer_id=${answer_id}`)
+    .catch(err => {
+      console.error('report answer', err);
+      throw err;
+    })
   }
 }

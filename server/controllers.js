@@ -49,18 +49,34 @@ module.exports = {
   },
 
   updateHelpQuestion: (req, res) => {
-    console.log('help question: ', req.body)
+    return db.updateHelpQuestion(req.params.question_id)
+      .then(() => {
+        res.status(204).send('helpfulness added');
+      })
+      .catch(err => res.staus(400).json(err));
   },
 
   updateHelpAnswer:(req, res) => {
-    console.log('help answer')
+    return db.updateHelpAnswer(req.params.answer_id)
+      .then(() => {
+        res.status(204).send('helpfulness added');
+      })
+      .catch(err => res.staus(400).json(err));
   },
 
   updateReportQuestion: (req, res) => {
-    console.log('Reported Question');
+    return db.updateReportQuestion(req.params.question_id)
+    .then(() => {
+      res.status(204).send('reqestion reported!');
+    })
+    .catch(err => res.staus(400).json(err));
   },
 
   updateReportAnswer: (req, res) => {
-    console.log('Report Answer')
+    return db.updateReportAnswer(req.params.answer_id)
+    .then(() => {
+      res.status(204).send('answer reported!');
+    })
+    .catch(err => res.staus(400).json(err));
   }
 }
