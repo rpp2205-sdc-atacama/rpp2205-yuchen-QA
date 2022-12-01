@@ -1,10 +1,11 @@
 const {Client} = require('pg');
+require('dotenv').config()
 const client = new Client({
-  host: 'localhost',
-  port: 5432,
-  user: 'yuchen',
-  database: 'sdcqa',
-  password: '123'
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PW
 });
 client.connect((err) => {
   if (err) {
@@ -19,31 +20,50 @@ module.exports = {
   getAnswers: (answers) => {
     let offset = (answers.page-1) * answers.count;
     console.log(answers);
-    return client.query(`SELECT json_agg(
-      json_build_object(
-        'answer_id', answers.answer_id,
-        'body', answers.body,
-        'date', answers.date,
-        'answerer_name', answers.answerer_name,
-        'helpfulness', answers.helpfulness,
-        'photos', coalesce(photos, '[]')
-      )
-    )FROM (
-      SELECT * FROM answers
-      WHERE answers.question_id=${answers.question}
-      LIMIT ${answers.count} OFFSET ${offset}) AS answers
-    LEFT JOIN(
-      SELECT answer_id, json_agg(
-        json_build_object(
-          'id', photos.photo_id,
-          'url', photos.url
-        )
-      ) photos FROM photos GROUP BY 1
-    ) photos ON answers.answer_id=photos.answer_id
-    `)
+    // let before = `SELECT json_agg(
+    //   json_build_object(
+    //     'answer_id', answers.answer_id,
+    //     'body', answers.body,
+    //     'date', answers.date,
+    //     'answerer_name', answers.answerer_name,
+    //     'helpfulness', answers.helpfulness,
+    //     'photos', coalesce(photos, '[]')
+    //   )
+    // )FROM (
+    //   SELECT * FROM answers
+    //   WHERE answers.question_id=${answers.question}
+    //   LIMIT ${answers.count} OFFSET ${offset}) AS answers
+    // LEFT JOIN(
+    //   SELECT answer_id, json_agg(
+    //     json_build_object(
+    //       'id', photos.photo_id,
+    //       'url', photos.url
+    //     )
+    //   ) photos FROM photos GROUP BY 1
+    // ) photos ON answers.answer_id=photos.answer_id
+    // `
+    let queryStr = `SELECT
+      answer_id,
+      body,
+      date,
+      answerer_name,
+      helpfulness,
+      (SELECT
+        COALESCE(json_agg(photo_list), '[]')
+      FROM
+        (SELECT
+          photos.photo_id AS id,
+          photos.url
+        FROM photos
+        WHERE photos.answer_id=answers.answer_id) AS photo_list
+      ) AS photos
+      FROM answers WHERE question_id=${answers.question}
+      LIMIT ${answers.count} OFFSET ${offset}`
+
+    return client.query(queryStr)
       .then((result) => {
         //console.log(result.rows[0]);
-        answers.results = !result.rows.length ? result.rows : result.rows[0].json_agg;
+        answers.results = result.rows
         console.log('return answers', answers);
         return answers;
       })
@@ -55,43 +75,79 @@ module.exports = {
 
   getQuestions: (product_id,count,page,results) => {
     let offset = (page - 1) * count;
-    let queryStr = `SELECT json_agg(
-        json_build_object(
-          'question_id', q.question_id,
-          'question_body', q.question_body,
-          'question_date', q.question_date,
-          'asker_name', q.asker_name,
-          'question_helpfulness', q.question_helpfulness,
-          'reported', q.reported,
-          'answers', coalesce(answers, '[]')
-        )
-      ) FROM (
-        SELECT * FROM questions
-        WHERE product_id=${product_id}
-        LIMIT ${count} OFFSET ${offset}
-      ) AS q LEFT JOIN(
-      SELECT question_id, json_object_agg(
-        a.answer_id,
-        json_build_object(
-          'id', a.answer_id,
-          'body', a.body,
-          'answerer_name', a.answerer_name,
-          'helpfulness', a.helpfulness,
-          'photos', coalesce(photos, '[]')
-        )
-      )answers FROM answers a
-        LEFT JOIN(
-          SELECT answer_id, json_agg(
-            p.url
-          ) photos FROM photos p GROUP BY 1
-      ) p ON a.answer_id=p.answer_id
-      GROUP BY 1
-    )a ON q.question_id=a.question_id
-   `;
-    return client.query(queryStr)
+  //   let queryStr = `SELECT json_agg(
+  //       json_build_object(
+  //         'question_id', q.question_id,
+  //         'question_body', q.question_body,
+  //         'question_date', q.question_date,
+  //         'asker_name', q.asker_name,
+  //         'question_helpfulness', q.question_helpfulness,
+  //         'reported', q.reported,
+  //         'answers', coalesce(answers, '[]')
+  //       )
+  //     ) FROM (
+  //       SELECT * FROM questions
+  //       WHERE product_id=${product_id}
+  //       LIMIT ${count} OFFSET ${offset}
+  //     ) AS q LEFT JOIN(
+  //     SELECT question_id, json_object_agg(
+  //       a.answer_id,
+  //       json_build_object(
+  //         'id', a.answer_id,
+  //         'body', a.body,
+  //         'answerer_name', a.answerer_name,
+  //         'helpfulness', a.helpfulness,
+  //         'photos', coalesce(photos, '[]')
+  //       )
+  //     )answers FROM answers a
+  //       LEFT JOIN(
+  //         SELECT answer_id, json_agg(
+  //           p.url
+  //         ) photos FROM photos p GROUP BY 1
+  //     ) p ON a.answer_id=p.answer_id
+  //     GROUP BY 1
+  //   )a ON q.question_id=a.question_id
+  //  `;
+
+  let queryStr3 = `SELECT
+    question_id,
+    question_body,
+    question_date,
+    asker_name,
+    question_helpfulness,
+    reported,
+    (SELECT
+        COALESCE (json_object_agg(key, value), '{}')
+      FROM
+        (SELECT
+          answer_list.id AS key,
+          to_jsonb(answer_list) AS value
+        FROM
+          (SELECT
+            answers.answer_id AS id,
+            answers.body,
+            answers.date,
+            answers.answerer_name,
+            answers.helpfulness,
+            (SELECT
+              coalesce(array_agg(photo_list.url), '{}')
+             FROM (
+              SELECT
+                photos.url
+              FROM photos
+              WHERE photos.answer_id=answers.answer_id) AS photo_list
+            )AS photos
+          FROM answers
+          WHERE answers.question_id = questions.question_id) AS answer_list
+        ) AS anseer_key_value_list
+    ) AS answers
+    FROM questions
+    WHERE product_id = ${product_id} LIMIT ${count} OFFSET ${offset}`
+    return client.query(queryStr3)
       .then((result) => {
-        //console.log(result.rows[0].json_agg);
-        results.results = !result.rows[0] ? result.rows : result.rows[0].json_agg
+        console.log(result.rows);
+        //console.log(result.rows[0])
+        results.results = result.rows;
         console.log(results);
         return results;
       })
@@ -136,7 +192,6 @@ module.exports = {
   },
 
   updateHelpQuestion: (question_id) => {
-
     return client.query(`UPDATE questions SET question_helpfulness = question_helpfulness + 1 WHERE question_id=${question_id}`)
       .catch(err => {
         console.error('update question help', err);

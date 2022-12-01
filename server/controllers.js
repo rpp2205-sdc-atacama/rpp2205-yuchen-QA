@@ -53,7 +53,7 @@ module.exports = {
       .then(() => {
         res.status(204).send('helpfulness added');
       })
-      .catch(err => res.staus(400).json(err));
+      .catch(err => res.status(400).json(err));
   },
 
   updateHelpAnswer:(req, res) => {
@@ -61,7 +61,7 @@ module.exports = {
       .then(() => {
         res.status(204).send('helpfulness added');
       })
-      .catch(err => res.staus(400).json(err));
+      .catch(err => res.status(400).json(err));
   },
 
   updateReportQuestion: (req, res) => {
@@ -69,7 +69,7 @@ module.exports = {
     .then(() => {
       res.status(204).send('reqestion reported!');
     })
-    .catch(err => res.staus(400).json(err));
+    .catch(err => res.status(400).json(err));
   },
 
   updateReportAnswer: (req, res) => {
@@ -77,6 +77,6 @@ module.exports = {
     .then(() => {
       res.status(204).send('answer reported!');
     })
-    .catch(err => res.staus(400).json(err));
+    .catch(err => res.status(400).json(err));
   }
 }
