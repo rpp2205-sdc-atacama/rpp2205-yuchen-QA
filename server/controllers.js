@@ -38,6 +38,7 @@ module.exports = {
   addAnswer: (req, res) => {
     const answer = [parseInt(req.params.question_id), req.body.name, req.body.email, req.body.body, new Date(Date.now()).toISOString()];
     let photos = req.body.photos
+    console.log(answer, photos);
     if (!photos.length) {
       return db.addAnswer(answer)
         .then(() => res.status(201).send('added new answers without photos'))
@@ -53,7 +54,7 @@ module.exports = {
       .then(() => {
         res.status(204).send('helpfulness added');
       })
-      .catch(err => res.staus(400).json(err));
+      .catch(err => res.status(400).json(err));
   },
 
   updateHelpAnswer:(req, res) => {
@@ -61,7 +62,7 @@ module.exports = {
       .then(() => {
         res.status(204).send('helpfulness added');
       })
-      .catch(err => res.staus(400).json(err));
+      .catch(err => res.status(400).json(err));
   },
 
   updateReportQuestion: (req, res) => {
@@ -69,7 +70,7 @@ module.exports = {
     .then(() => {
       res.status(204).send('reqestion reported!');
     })
-    .catch(err => res.staus(400).json(err));
+    .catch(err => res.status(400).json(err));
   },
 
   updateReportAnswer: (req, res) => {
@@ -77,6 +78,6 @@ module.exports = {
     .then(() => {
       res.status(204).send('answer reported!');
     })
-    .catch(err => res.staus(400).json(err));
+    .catch(err => res.status(400).json(err));
   }
 }
