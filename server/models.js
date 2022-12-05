@@ -36,6 +36,7 @@ module.exports = {
         WHERE photos.answer_id=answers.answer_id) AS photo_list
       ) AS photos
       FROM answers WHERE question_id=${answers.question}
+      AND reported='0'
       LIMIT ${answers.count} OFFSET ${offset}`;
 
     return client.query(queryStr)
@@ -85,7 +86,8 @@ module.exports = {
           ) AS anseer_key_value_list
       ) AS answers
       FROM questions
-      WHERE product_id = ${product_id} LIMIT ${count} OFFSET ${offset}`;
+      WHERE product_id = ${product_id} AND reported='0'
+      LIMIT ${count} OFFSET ${offset}`;
     return client.query(queryStr3)
       .then((result) => {
         //console.log(result.rows);
