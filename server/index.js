@@ -6,7 +6,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
-////app.use('/', router)
+app.get('/', (req, res) => {
+  res.send('connected!');
+})
 
 
 app.get('/qa/questions', getQuestions)
@@ -21,7 +23,7 @@ app.put('/qa/questions/:question_id/helpful', updateHelpQuestion);
 
 app.put('/qa/answers/:answer_id/helpful', updateHelpAnswer);
 
-app.put('qa/questions/:question_id/report', updateReportQuestion);
+app.put('/qa/questions/:question_id/report', updateReportQuestion);
 
 app.put('/qa/answers/:answer_id/report', updateReportAnswer);
 
