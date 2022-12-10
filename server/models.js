@@ -36,6 +36,7 @@ module.exports = {
         WHERE photos.answer_id=answers.answer_id) AS photo_list
       ) AS photos
       FROM answers WHERE question_id=${answers.question}
+      AND reported='0'
       LIMIT ${answers.count} OFFSET ${offset}`;
 
     return client.query(queryStr)
@@ -52,6 +53,39 @@ module.exports = {
 
   getQuestions: (product_id,count,page,results) => {
     let offset = (page - 1) * count;
+    let queryStr = `SELECT json_agg(
+      json_build_object(
+        'question_id', q.question_id,
+        'question_body', q.question_body,
+        'question_date', q.question_date,
+        'asker_name', q.asker_name,
+        'question_helpfulness', q.question_helpfulness,
+        'reported', q.reported,
+        'answers', coalesce(answers, '[]')
+      )
+    ) FROM (
+      SELECT * FROM questions
+      WHERE product_id=${product_id}
+      LIMIT ${count} OFFSET ${offset}
+    ) AS q LEFT JOIN(
+    SELECT question_id, json_object_agg(
+      a.answer_id,
+      json_build_object(
+        'id', a.answer_id,
+        'body', a.body,
+        'answerer_name', a.answerer_name,
+        'helpfulness', a.helpfulness,
+        'photos', coalesce(photos, '[]')
+      )
+    )answers FROM answers a
+      LEFT JOIN(
+        SELECT answer_id, json_agg(
+          p.url
+        ) photos FROM photos p GROUP BY 1
+    ) p ON a.answer_id=p.answer_id
+    GROUP BY 1
+  )a ON q.question_id=a.question_id
+ `;
     let queryStr3 = `SELECT
       question_id,
       question_body,
@@ -85,7 +119,8 @@ module.exports = {
           ) AS anseer_key_value_list
       ) AS answers
       FROM questions
-      WHERE product_id = ${product_id} LIMIT ${count} OFFSET ${offset}`;
+      WHERE product_id = ${product_id} AND reported='0'
+      LIMIT ${count} OFFSET ${offset}`;
     return client.query(queryStr3)
       .then((result) => {
         //console.log(result.rows);
@@ -148,7 +183,7 @@ module.exports = {
   },
   updateReportQuestion: (question_id) => {
     console.log('Reported Question');
-    return client.query(`UPDATE questions SET reported = '1' WHERE question_id=${question_id}`)
+    return client.query(`UPDATE questions SET reported ='1' WHERE question_id=${question_id}`)
       .catch(err => {
         console.error('report question', err);
         throw err;
@@ -156,7 +191,7 @@ module.exports = {
   },
 
   updateReportAnswer: (answer_id) => {
-    return client.query(`UPDATE answers SET reported = '1' WHERE answer_id=${answer_id}`)
+    return client.query(`UPDATE answers SET reported ='1' WHERE answer_id=${answer_id}`)
     .catch(err => {
       console.error('report answer', err);
       throw err;

@@ -39,6 +39,9 @@ pool
   .then(() => pool.query(`DROP TABLE IF EXISTS photos`))
   .then(() => pool.query(`CREATE TABLE photos(photo_id INT NOT NULL, url TEXT, answer_id INT NOT NULL)`))
   .then(() => pool.query(`CREATE SEQUENCE IF NOT EXISTS photos_seq START 1 INCREMENT 1 OWNED BY photos.photo_id`))
+  .then(() => pool.query(`CREATE INDEX product_id_idx ON questions(product_id)`))
+  .then(() => pool.query(`CREATE INDEX question_id_idx ON answers(question_id)`))
+  .then(() => pool.query(`CREATE INDEX answer_id_idex ON photos(answer_id)`))
   .then(() => {
     console.log('db tables create completed!');
     return pool.end();
