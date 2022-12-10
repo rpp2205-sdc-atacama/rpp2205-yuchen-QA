@@ -21,7 +21,7 @@ app.put('/qa/questions/:question_id/helpful', updateHelpQuestion);
 
 app.put('/qa/answers/:answer_id/helpful', updateHelpAnswer);
 
-app.put('qa/questions/:question_id/report', updateReportQuestion);
+app.put('/qa/questions/:question_id/report', updateReportQuestion);
 
 app.put('/qa/answers/:answer_id/report', updateReportAnswer);
 

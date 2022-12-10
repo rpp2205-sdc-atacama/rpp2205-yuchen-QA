@@ -24,7 +24,7 @@ describe('Testing api', () => {
       const response = await request(app).get('/qa/questions').query({product_id:'1'});
       expect(response.status).toBe(200);
       expect(response.body.product_id).toBe(1);
-      expect(response.body.results.length).toBe(5);
+      expect(response.body.results.length).toBe(4);
     })
   });
   describe("get /qa/questions/1/answers", () => {
@@ -75,34 +75,29 @@ describe('Testing api', () => {
       expect(response.text).toBe('added new answers with photos')
     })
   })
-  // describe("get /qa/questions/1/answers", () => {
-  //   it('Should return 200', async() => {
-  //     const response = await request(app).get('/qa/questions/1/answers');
-  //     expect(response.status).toBe(200);
-  //   })
-  // })
-  // describe("get /qa/questions/1/answers", () => {
-  //   it('Should return 200', async() => {
-  //     const response = await request(app).get('/qa/questions/1/answers');
-  //     expect(response.status).toBe(200);
-  //   })
-  // })
-  // describe("get /qa/questions/1/answers", () => {
-  //   it('Should return 200', async() => {
-  //     const response = await request(app).get('/qa/questions/1/answers');
-  //     expect(response.status).toBe(200);
-  //   })
-  // })
-  // describe("get /qa/questions/1/answers", () => {
-  //   it('Should return 200', async() => {
-  //     const response = await request(app).get('/qa/questions/1/answers');
-  //     expect(response.status).toBe(200);
-  //   })
-  // })
-  // describe("put /qa/questions/1/helpful", () => {
-  //   it('Should return 200', async() => {
-  //     const response = await request(app).put('/qa/questions/1/helpful');
-  //     expect(response.status).toBe(204);
-  //   })
-  // })
+  describe("put /qa/questions/9/helpful", () => {
+    it('Should return 204', async() => {
+      const response = await request(app).put('/qa/questions/0/helpful');
+      expect(response.status).toBe(204);
+    })
+  })
+  describe("put /qa/questions/9/report", () => {
+    it('Should return 204', async() => {
+      const response = await request(app).put('/qa/questions/9/report');
+      expect(response.status).toBe(204);
+    })
+  })
+  describe("put /qa/answers/101/helpful", () => {
+    it('Should return 204', async() => {
+      const response = await request(app).put('/qa/answers/101/helpful');
+      expect(response.status).toBe(204);
+    })
+  })
+  describe("put /qa/answers/100/report", () => {
+    it('Should return 204', async() => {
+      const response = await request(app).put('/qa/answers/101/report');
+      expect(response.status).toBe(204);
+    })
+  })
+
 });

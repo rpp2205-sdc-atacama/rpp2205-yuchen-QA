@@ -7,8 +7,10 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jest --watch",
-    "server": "nodemon server/index.js"
+    "test": "jest --coverage",
+    "server": "nodemon server/index.js",
+    "k6": "k6 run k6/k6.js"
+
   },
   "repository": {
     "type": "git",
