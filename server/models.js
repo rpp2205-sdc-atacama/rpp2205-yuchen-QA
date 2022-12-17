@@ -1,11 +1,11 @@
 const {Client} = require('pg');
 require('dotenv').config()
 const client = new Client({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PW
+  host: '3.145.145.23',
+  port: 5432,
+  user: 'yuchen',
+  database: 'sdcqa',
+  password: '123'
 });
 client.connect((err) => {
   if (err) {
@@ -53,39 +53,6 @@ module.exports = {
 
   getQuestions: (product_id,count,page,results) => {
     let offset = (page - 1) * count;
-    let queryStr = `SELECT json_agg(
-      json_build_object(
-        'question_id', q.question_id,
-        'question_body', q.question_body,
-        'question_date', q.question_date,
-        'asker_name', q.asker_name,
-        'question_helpfulness', q.question_helpfulness,
-        'reported', q.reported,
-        'answers', coalesce(answers, '[]')
-      )
-    ) FROM (
-      SELECT * FROM questions
-      WHERE product_id=${product_id}
-      LIMIT ${count} OFFSET ${offset}
-    ) AS q LEFT JOIN(
-    SELECT question_id, json_object_agg(
-      a.answer_id,
-      json_build_object(
-        'id', a.answer_id,
-        'body', a.body,
-        'answerer_name', a.answerer_name,
-        'helpfulness', a.helpfulness,
-        'photos', coalesce(photos, '[]')
-      )
-    )answers FROM answers a
-      LEFT JOIN(
-        SELECT answer_id, json_agg(
-          p.url
-        ) photos FROM photos p GROUP BY 1
-    ) p ON a.answer_id=p.answer_id
-    GROUP BY 1
-  )a ON q.question_id=a.question_id
- `;
     let queryStr3 = `SELECT
       question_id,
       question_body,
