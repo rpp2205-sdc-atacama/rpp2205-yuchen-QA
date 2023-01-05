@@ -27,8 +27,8 @@ app.put('/qa/questions/:question_id/report', updateReportQuestion);
 
 app.put('/qa/answers/:answer_id/report', updateReportAnswer);
 
-app.get('/loaderio-21b02075b781d5b9a9584ce4856e7117.html', (req, res) => {
-  res.sendFile('loaderio-21b02075b781d5b9a9584ce4856e7117.html', {root:__dirname});
+app.get('/loaderio-a0c8d1a135452d9700fa2affa0ad7e65.html', (req, res) => {
+  res.sendFile('loaderio.html', {root:__dirname});
 })
 const port = process.env.PORT || 8000;
 app.listen(port,() => {

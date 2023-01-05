@@ -1,7 +1,7 @@
 const {Client} = require('pg');
 require('dotenv').config()
 const client = new Client({
-  host: '3.145.145.23',
+  host: '3.142.82.206',
   port: 5432,
   user: 'yuchen',
   database: 'sdcqa',
@@ -19,7 +19,7 @@ client.connect((err) => {
 module.exports = {
   getAnswers: (answers) => {
     let offset = (answers.page-1) * answers.count;
-    console.log(answers);
+    //console.log(answers);
     let queryStr = `SELECT
       answer_id,
       body,
