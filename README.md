@@ -163,12 +163,8 @@ Testing: Jest | SuperTest | K6 | Loader.io
 ---
 ## Other Services
 Please reference other API Services that make up the other part of the e-commerce app API:
-
-  ### Product Overview
   
   - <a href='https://github.com/rpp2205-sdc-atacama/rpp2205-yui-overview'>Product Overviews</a> by Yui Murayama
-  
-  ### Reviews
   
   - <a href='https://github.com/rpp2205-sdc-atacama/rpp2205-huan-reviews'>Reviews</a> by Huan Tran
 
