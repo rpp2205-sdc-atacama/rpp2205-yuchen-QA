@@ -1,6 +1,6 @@
 # Retail Q&A | Back-end services for e-commerce web app
 
-Our 3 software engineer rebuilt back-end API service for a monolithic to service-oriented micorservices to support our existing e-commerce site in this project. The service I built was scaled to meet the demands of production traffic with 8000rps with < 1s response time with 0% error rate.
+Our 3 software engineers rebuilt back-end API service for a monolithic to service-oriented micorservices to support our existing e-commerce site in this project. The service I built was scaled to meet the demands of production traffic with 8000RPS with < 40ms response time with 0% error rate.
 
 ## Techonologies Used
 
